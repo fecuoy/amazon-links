@@ -160,7 +160,9 @@ class Amazon_Links
 		$this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts');
 
 		$this->loader->add_action('init', $plugin_admin, 'amazon_link_cpt');
-		$this->loader->add_action('custom_cron_hook',  $plugin_admin, 'custom_cron_hook_func');
+		$this->loader->add_action('amazon_links_cron_hook',  $plugin_admin, 'amazon_links_cron_hook_func');
+
+		$this->loader->add_filter('manage_amazon_link_posts_columns', $plugin_admin, 'add_custom_column', 20, 1);
 	}
 
 	/**
