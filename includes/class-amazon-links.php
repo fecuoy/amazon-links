@@ -161,8 +161,8 @@ class Amazon_Links
 
 		$this->loader->add_action('init', $plugin_admin, 'amazon_link_cpt');
 		$this->loader->add_action('amazon_links_cron_hook',  $plugin_admin, 'amazon_links_cron_hook_func');
-
-		$this->loader->add_filter('manage_amazon_link_posts_columns', $plugin_admin, 'add_custom_column', 20, 1);
+		$this->loader->add_action('manage_amazon_link_posts_custom_column', $plugin_admin, 'link_column_data', 20, 2);
+		$this->loader->add_filter('manage_amazon_link_posts_columns', $plugin_admin, 'add_link_column', 20, 1);
 	}
 
 	/**
