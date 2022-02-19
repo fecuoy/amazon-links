@@ -34,7 +34,7 @@ class Amazon_Links_Activator
 	{
 		//creating cron job 
 		if (!wp_next_scheduled('amazon_links_cron_hook')) {
-			wp_schedule_event(time(), 'hourly', 'amazon_links_cron_hook');
+			wp_schedule_event(time(), 'twicedaily', 'amazon_links_cron_hook');
 		}
 
 
