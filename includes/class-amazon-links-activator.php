@@ -71,38 +71,56 @@ class Amazon_Links_Activator
 			'order_by' => 'ID',
 			'order' => 'ASC',
 		]);
-		//function to get all links
-		function getUrls($string)
+		//function to get all links from content
+		function get_urls($string)
 		{
-			$regex = '/https?\:\/\/[^\" ]+/i';
+			$regex = '/https:\/\/(www\.)*am[za].*?(?=[?\'\"])/i';
 			preg_match_all($regex, $string, $matches);
 			return ($matches[0]);
 		}
+		//function to get all links with short codes
+		function get_link_by_short_code($string)
+		{
+			$regex = '/[^\]]+(?=\[\/asa2])/i';
+			$links = array();
+			preg_match_all(
+				$regex,
+				$string,
+				$matches
+			);
+			foreach ($matches[0] as $short_code) {
+				$links[] = "https://www.amazon.es/dp/" . $short_code;
+			}
+			return ($links);
+		}
+
+		foreach ($all_posts as $post) {
+
+			$final_links = array();
+			$content_links = get_urls($post->post_content);
+			$shortcode_links = get_link_by_short_code($post->post_content);
+			$mypost = [
+				'post_title'    => $post->post_title,
+				'post_type'  => 'amazon_link',
+				'post_status'   => 'publish',
+			];
+
+			//checking for only amazon links
+			foreach ($content_links as $link) {
+
+				$final_links[] = $link;
+			}
+			//checking for shortcode
+			foreach ($shortcode_links as $link) {
+
+				$final_links[] = $link;
+			}
 
 
-		if ($all_posts) {
-			foreach ($all_posts as $post) {
-
-				$final_links = array();
-				$links = getUrls($post->post_content);
-				$mypost = [
-					'post_title'    => $post->post_title,
-					'post_type'  => 'amazon_link',
-					'post_status'   => 'publish',
-				];
-
-				//checking for only amazon links
-				foreach ($links as $link) {
-					if ((str_contains($link, "amazon") || str_contains($link, "amzn.to")) && (!str_contains($link, "</a>"))) {
-						$final_links[] = $link;
-					}
-				}
-
-				//creating for each amazon link a post
-				foreach (array_unique($final_links) as $final_link) {
-					$id = wp_insert_post($mypost);
-					update_post_meta($id, "the_amazon_link", $final_link);
-				}
+			//creating for each amazon link a post
+			foreach (array_unique($final_links) as $final_link) {
+				$id = wp_insert_post($mypost);
+				update_post_meta($id, "the_amazon_link", $final_link);
 			}
 		}
 	}
