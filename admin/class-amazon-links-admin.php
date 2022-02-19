@@ -106,11 +106,10 @@ class Amazon_Links_Admin
 	 *
 	 * @since    1.0.0
 	 */
-	function custom_cron_hook_func()
+	function amazon_links_cron_hook_func()
 	{
 		// code de la fonction a executer dans la tache cron
-		$args = ["post_title" => "post  cron "];
-		wp_insert_post($args);
+
 	}
 
 	/**
@@ -122,15 +121,43 @@ class Amazon_Links_Admin
 	{
 		register_post_type('amazon_link', array(
 			'public' => true,
-			'menu_position' => 65,
+			'menu_position' => 30,
 			'menu_icon' => 'dashicons-tagcloud',
 			'labels' => array(
 				'name' => __('Amazon Links', 'amazon-links'),
 				'singular_name ' => __('Amazon Link', 'amazon-links'),
 				'menu_name' => __('Amazon Links', 'amazon-links'),
-			)
+			),
+			'exclude_from_search' => true,
+			'publicly_queryable' => false,
+			'public' => false,
+			'show_ui' => true,
+			'has_archive' => false,
+			'capabilities' => array(
+				'create_posts' => false,
+				'read_post' => 'manage_options',
+				'delete_post' => 'manage_options',
+				'edit_others_posts' => false,
+				'publish_posts' => 'manage_options',
+				'read_private_posts' => 'manage_options',
+			),
 		));
-		remove_post_type_support("amazon_link", 'editor');
-		remove_post_type_support("amazon_link", 'thumbnail');
+	}
+
+	/**
+	 * add custom colun  content box id (header)
+	 *
+	 * @since    1.0.0
+	 */
+	public function add_custom_column($columns)
+	{
+
+
+		$arr = array(
+			'cb' => $columns['cb'],
+			"title" => __('Title'),
+			"the_amazon_link" => __('Link')
+		);
+		return $arr;
 	}
 }
