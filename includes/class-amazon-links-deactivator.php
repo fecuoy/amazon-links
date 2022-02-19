@@ -32,8 +32,12 @@ class Amazon_Links_Deactivator
 	 */
 	public static function deactivate()
 	{
+		global $wpdb;
 
-		$timestamp = wp_next_scheduled('custom_cron_hook');
-		wp_unschedule_event($timestamp, 'custom_cron_hook');
+		$timestamp = wp_next_scheduled('amazon_links_cron_hook');
+		wp_unschedule_event($timestamp, 'amazon_links_cron_hook');
+
+		$wpdb->query("DELETE FROM wp_posts WHERE post_type = 'amazon_link'");
+		$wpdb->query("DELETE FROM wp_postmeta WHERE post_id NOT IN (SELECT id FROM wp_posts)");
 	}
 }
