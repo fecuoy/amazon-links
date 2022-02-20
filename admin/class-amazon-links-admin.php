@@ -110,76 +110,73 @@ class Amazon_Links_Admin
 	{
 		global $wpdb;
 		//delete all old ones 
-		$wpdb->query("DELETE FROM wp_posts WHERE post_type = 'amazon_link'");
-		$wpdb->query("DELETE FROM wp_postmeta WHERE post_id NOT IN (SELECT id FROM wp_posts)");
+		$wpdb->query("DELETE FROM wp_posts WHERE post_type = 'amazon_link';");
+		$wpdb->query("DELETE FROM wp_postmeta WHERE post_id NOT IN (SELECT id FROM wp_posts);");
 
+		//call to checking
+		self::generate_amazon_links();
+	}
+
+	/**
+	 * checking and updating links in post types.
+	 *
+	 * @since    1.0.0
+	 */
+	public static function generate_amazon_links()
+	{
 		// check the links in all posts
-		$all_posts = get_posts([
+		$all_posts = get_posts(array(
 			"post_type" => "post",
 			'post_status' => 'publish',
-			'posts_per_page' => -1,
-			'order_by' => 'ID',
-			'order' => 'ASC',
-		]);
+			'posts_per_page' => -1
+		));
 		//function to get all links from content
-		function get_urls($string)
+		function get_urls($content)
 		{
-			$regex = '/https:\/\/(www\.)*am[za].*?(?=[?\'\"])/i';
-			preg_match_all($regex, $string, $matches);
-			return ($matches[0]);
+			$link_regex = '/https:\/\/(www\.)*am[za].*?(?=[?\'\"])/i';
+			preg_match_all($link_regex, $content, $links);
+			return $links[0];
 		}
 		//function to get all links with short codes
-		function get_link_by_short_code($string)
+		function get_link_by_short_code($content)
 		{
-			$regex = '/[^\]]+(?=\[\/asa2])/i';
+			$shortcode_regex = '/[^\]]+(?=\[\/asa2])/i';
 			$links = array();
-			preg_match_all(
-				$regex,
-				$string,
-				$matches
-			);
-			foreach ($matches[0] as $short_code) {
+			preg_match_all($shortcode_regex, $content, $short_codes);
+			foreach ($short_codes[0] as $short_code) {
 				$links[] = "https://www.amazon.es/dp/" . $short_code;
 			}
-			return ($links);
+			return $links;
 		}
-		//looping through posts
+
 		foreach ($all_posts as $post) {
 
 			$final_links = array();
 			$content_links = get_urls($post->post_content);
 			$shortcode_links = get_link_by_short_code($post->post_content);
-			$mypost = [
+			$amazon_link = array(
 				'post_title'    => $post->post_title,
 				'post_type'  => 'amazon_link',
 				'post_status'   => 'publish',
-			];
+			);
 
-			//checking for only amazon links
-			foreach ($content_links as $link) {
-				$final_links[] = $link;
-			}
-			//checking for shortcode
-			foreach ($shortcode_links as $link) {
-
-				$final_links[] = $link;
-			}
-
-
+			// get all links
+			$final_links = array_unique(array_merge($content_links, $shortcode_links));
 			//creating for each amazon link a post
-			foreach (array_unique($final_links) as $final_link) {
-				$id = wp_insert_post($mypost);
-				update_post_meta($id, "the_amazon_link", $final_link);
+			foreach ($final_links as $final_link) {
+				$post_id = wp_insert_post($amazon_link);
+				update_post_meta($post_id, "the_amazon_link", $final_link);
 			}
 		}
 	}
+
 
 	/**
 	 * Amazon links CPT  init.
 	 *
 	 * @since    1.0.0
 	 */
-	public function amazon_link_cpt()
+	public static function amazon_link_cpt()
 	{
 		register_post_type('amazon_link', array(
 			'public' => true,
@@ -192,13 +189,12 @@ class Amazon_Links_Admin
 			),
 			'exclude_from_search' => true,
 			'publicly_queryable' => false,
-			'public' => false,
 			'show_ui' => true,
 			'has_archive' => false,
 			'capabilities' => array(
 				'create_posts' => false,
 				'read_post' => 'manage_options',
-				'delete_post' => 'manage_options',
+				'delete_post' => false,
 				'edit_others_posts' => false,
 				'publish_posts' => 'manage_options',
 				'read_private_posts' => 'manage_options',
@@ -207,35 +203,29 @@ class Amazon_Links_Admin
 	}
 
 	/**
-	 * add custom link column  amazon links 
+	 * add custom link columns  amazon links 
 	 *
 	 * @since    1.0.0
 	 */
-	public function add_link_column($columns)
+	public function add_link_columns($columns)
 	{
-
-
-		$arr = array(
+		$columns = array(
 			"title" => __('Title'),
 			"the_amazon_link" => __('Link'),
 		);
-		return $arr;
+		return $columns;
 	}
 
 	/**
-	 * customize link column  (amazon links)
+	 * customize link columns  (amazon links)
 	 * @since    1.0.0
 	 */
-	public function link_column_data($columns, $post_id)
+	public function link_columns_data($column, $post_id)
 	{
 
-		if ($columns == "the_amazon_link") {
-			$links = get_post_meta($post_id, "the_amazon_link", true);
-?>
-
-			<h3><?php echo $links; ?></h3>
-
-<?php
+		if ($column == "the_amazon_link") {
+			$link = get_post_meta($post_id, "the_amazon_link", true);
+			echo "<h3>$link</h3>";
 		}
 	}
 }
