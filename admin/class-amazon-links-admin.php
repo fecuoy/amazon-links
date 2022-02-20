@@ -121,13 +121,13 @@ class Amazon_Links_Admin
 			'order_by' => 'ID',
 			'order' => 'ASC',
 		]);
-		//function to get all links from content
-		function get_urls($string)
-		{
-			$regex = '/https:\/\/(www\.)*am[za].*?(?=[?\'\"])/i';
-			preg_match_all($regex, $string, $matches);
-			return ($matches[0]);
-		}
+		// //function to get all links from content
+		// function get_urls($string)
+		// {
+		// 	$regex = '/https:\/\/(www\.)*am[za].*?(?=[?\'\"])/i';
+		// 	preg_match_all($regex, $string, $matches);
+		// 	return ($matches[0]);
+		// }
 		//function to get all links with short codes
 		function get_link_by_short_code($string)
 		{
@@ -155,11 +155,11 @@ class Amazon_Links_Admin
 				'post_status'   => 'publish',
 			];
 
-			//checking for only amazon links
-			foreach ($content_links as $link) {
+			// //checking for only amazon links
+			// foreach ($content_links as $link) {
 
-				$final_links[] = $link;
-			}
+			// 	$final_links[] = $link;
+			// }
 			//checking for shortcode
 			foreach ($shortcode_links as $link) {
 
