@@ -114,7 +114,27 @@ class Amazon_Links_Admin
 		$wpdb->query("DELETE FROM wp_postmeta WHERE post_id NOT IN (SELECT id FROM wp_posts);");
 
 		//call to checking
-		self::generate_amazon_links();
+		$this->generate_amazon_links();
+	}
+
+	//function to get all links with short codes
+	public function get_link_by_short_code($content)
+	{
+		$shortcode_regex = '/[^\]]+(?=\[\/asa2])/i';
+		$links = array();
+		preg_match_all($shortcode_regex, $content, $short_codes);
+		foreach ($short_codes[0] as $short_code) {
+			$links[] = "https://www.amazon.es/dp/" . $short_code;
+		}
+		return $links;
+	}
+
+	//function to get all links from content
+	function get_urls($content)
+	{
+		$link_regex = '/https:\/\/(www\.)*am[za].*?(?=[?\'\"])/i';
+		preg_match_all($link_regex, $content, $links);
+		return $links[0];
 	}
 
 	/**
@@ -130,43 +150,26 @@ class Amazon_Links_Admin
 			'post_status' => 'publish',
 			'posts_per_page' => -1
 		));
-		//function to get all links from content
-		function get_urls($content)
-		{
-			$link_regex = '/https:\/\/(www\.)*am[za].*?(?=[?\'\"])/i';
-			preg_match_all($link_regex, $content, $links);
-			return $links[0];
-		}
-		//function to get all links with short codes
-		function get_link_by_short_code($content)
-		{
-			$shortcode_regex = '/[^\]]+(?=\[\/asa2])/i';
-			$links = array();
-			preg_match_all($shortcode_regex, $content, $short_codes);
-			foreach ($short_codes[0] as $short_code) {
-				$links[] = "https://www.amazon.es/dp/" . $short_code;
-			}
-			return $links;
-		}
 
 		foreach ($all_posts as $post) {
-
 			$final_links = array();
-			$content_links = get_urls($post->post_content);
-			$shortcode_links = get_link_by_short_code($post->post_content);
+			$content_links = self::get_urls($post->post_content);
+			$shortcode_links = self::get_link_by_short_code($post->post_content);
 			$amazon_link = array(
 				'post_title'    => $post->post_title,
 				'post_type'  => 'amazon_link',
-				'post_status'   => 'publish',
+				'post_status'   => 'publish'
 			);
 
 			// get all links
-			$final_links = array_unique(array_merge($content_links, $shortcode_links));
-			//creating for each amazon link a post
-			foreach ($final_links as $final_link) {
-				$post_id = wp_insert_post($amazon_link);
-				update_post_meta($post_id, "the_amazon_link", $final_link);
-			}
+			$final_links = array_values(array_unique(array_merge($content_links, $shortcode_links)));
+
+			// No amazon links in this post
+			if (count($final_links) === 0) continue;
+
+			//store all post links in one amazon link post 
+			$post_id = wp_insert_post($amazon_link);
+			update_post_meta($post_id, "the_amazon_link", $final_links);
 		}
 	}
 
@@ -224,8 +227,10 @@ class Amazon_Links_Admin
 	{
 
 		if ($column == "the_amazon_link") {
-			$link = get_post_meta($post_id, "the_amazon_link", true);
-			echo "<h3>$link</h3>";
+			$links = get_post_meta($post_id, "the_amazon_link", true);
+			foreach ($links as $link) {
+				echo "<strong>$link</strong><br />";
+			}
 		}
 	}
 }
